@@ -32,6 +32,8 @@ import com.ib.client.TickAttribLast;
 
 public class WrapperImpl implements EWrapper {
 
+    public static String headTimestamp;
+
     @Override
     public void accountDownloadEnd(String arg0) {
         // TODO Auto-generated method stub
@@ -88,8 +90,7 @@ public class WrapperImpl implements EWrapper {
 
     @Override
     public void connectAck() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'connectAck'");
+        System.out.println("Connection acknlowedged");
     }
 
     @Override
@@ -176,8 +177,8 @@ public class WrapperImpl implements EWrapper {
 
     @Override
     public void headTimestamp(int arg0, String arg1) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'headTimestamp'");
+        System.out.println("Req Id: " + arg0 + " Head Timestamp: " + arg1);
+        this.headTimestamp = arg1;
     }
 
     @Override
@@ -242,8 +243,7 @@ public class WrapperImpl implements EWrapper {
 
     @Override
     public void managedAccounts(String arg0) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'managedAccounts'");
+        System.out.println("Managed Accounts: " + arg0);
     }
 
     @Override
@@ -278,8 +278,7 @@ public class WrapperImpl implements EWrapper {
 
     @Override
     public void nextValidId(int arg0) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'nextValidId'");
+        System.out.println("Next Valid ID: " + arg0);
     }
 
     @Override
