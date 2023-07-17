@@ -1,7 +1,6 @@
 package market.datascience.repository;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.List;
 import java.util.Map;

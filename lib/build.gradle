@@ -14,6 +14,9 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+    flatDir {
+        dirs 'libraries'
+    }
 }
 
 dependencies {
@@ -23,6 +26,8 @@ dependencies {
     // This dependency is used internally, and not exposed to consumers on their own compile classpath.
     implementation 'com.google.guava:guava:31.0.1-jre'
     implementation 'org.apache.commons:commons-csv:1.10.0'
+    implementation 'com.interactivebrokers:TwsApi'
+
 
 }
 
