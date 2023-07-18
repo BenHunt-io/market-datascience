@@ -1,5 +1,11 @@
-package market.interactive_brokers;
+package market.interactive_brokers.client;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,9 +36,20 @@ import com.ib.client.TickAttrib;
 import com.ib.client.TickAttribBidAsk;
 import com.ib.client.TickAttribLast;
 
-public class WrapperImpl implements EWrapper {
+public class ApiConsumer implements EWrapper {
 
-    public static String headTimestamp;
+    // new api respones get appeneded
+    public Map<IbkrApiMethod, List<Object>> apiResponsesByName = new HashMap<>();
+    public static final DateTimeFormatter LOCAL_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HH:mm:ss");
+
+    public <T> T getLatestApiResponse(IbkrApiMethod apiMethod){
+        List<Object> responsesForApiMethod = apiResponsesByName.get(apiMethod);
+        return (T) responsesForApiMethod.get(responsesForApiMethod.size()-1);
+    }
+
+    public <T> List<T> getApiResponses(IbkrApiMethod apiMethod){
+        return (List<T>) apiResponsesByName.get(apiMethod);
+    }
 
     @Override
     public void accountDownloadEnd(String arg0) {
@@ -177,32 +194,28 @@ public class WrapperImpl implements EWrapper {
 
     @Override
     public void headTimestamp(int arg0, String arg1) {
-        System.out.println("Req Id: " + arg0 + " Head Timestamp: " + arg1);
-        this.headTimestamp = arg1;
+        LocalDateTime headLocalDateTime = LocalDateTime.parse(arg1, LOCAL_DATE_TIME_FORMAT);
+        addApiResponse(IbkrApiMethod.HEAD_TIMESTAMP, headLocalDateTime);
     }
 
     @Override
     public void histogramData(int arg0, List<HistogramEntry> arg1) {
-        // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'histogramData'");
     }
 
     @Override
     public void historicalData(int arg0, Bar arg1) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'historicalData'");
+        addApiResponse(IbkrApiMethod.HISTORICAL_DATA, arg1);
     }
 
     @Override
     public void historicalDataEnd(int arg0, String arg1, String arg2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'historicalDataEnd'");
+        System.out.println("historical data end");
     }
 
     @Override
     public void historicalDataUpdate(int arg0, Bar arg1) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'historicalDataUpdate'");
+        System.out.println("historical data update");
     }
 
     @Override
@@ -577,6 +590,13 @@ public class WrapperImpl implements EWrapper {
     public void wshMetaData(int arg0, String arg1) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'wshMetaData'");
+    }
+
+    private void addApiResponse(IbkrApiMethod apiMethod, Object apiResponse){
+        if(apiResponsesByName.get(apiMethod) == null){
+            apiResponsesByName.put(apiMethod, new ArrayList<>());
+        }
+        apiResponsesByName.get(apiMethod).add(apiResponse);
     }
     
 }
