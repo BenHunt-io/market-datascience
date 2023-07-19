@@ -3,11 +3,21 @@ package market.interactive_brokers;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvWriter;
 
 import com.ib.client.Bar;
 import com.ib.client.Contract;
@@ -17,16 +27,20 @@ import com.ib.client.EReader;
 import com.ib.client.EReaderSignal;
 import com.ib.client.EWrapper;
 import com.ib.client.Types.SecType;
+import com.ib.client.Types.WhatToShow;
 
 import TestJavaClient.SampleFrame;
+import market.datascience.repository.MarketRepository;
 import market.interactive_brokers.client.ApiConsumer;
 import market.interactive_brokers.client.IbkrApiMethod;
+import market.interactive_brokers.client.IbkrCsvPrinter;
 import market.interactive_brokers.client.QueueConsumerThread;
 import utils.SleepUtil;
 
 class IBKRTest {
 
     Logger logger = Logger.getLogger(IBKRTest.class.getName());
+    private static final DateTimeFormatter ZONE_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd HH:mm:ss VV");
 
     @Test
     void testTWSClientConnectionWithSampleCode(){
@@ -116,15 +130,15 @@ class IBKRTest {
         
         Contract spyContract = createSPYContract();
 
-        String endTime = "20210101 00:00:00 America/Chicago";
+        ZonedDateTime endTime = ZonedDateTime.parse("20210101 00:00:00 America/Chicago", ZONE_DATE_TIME_FORMAT);
         String duration = "1 Y";
         String barSizeSetitng = "1 day";
-        String whatToShow = "TRADES";
+        String whatToShow = WhatToShow.TRADES.name();
         int regularTradingHours = 1; // only show data within regular trading hours
         int formatBarDate = 1; // 1 indicates we should format as yyyyMMdd HH:mm:ss
         boolean keepUpToDate = false;
     
-        client.reqHistoricalData(0, spyContract, endTime, duration,
+        client.reqHistoricalData(0, spyContract, ZONE_DATE_TIME_FORMAT.format(endTime), duration,
             barSizeSetitng, whatToShow, regularTradingHours, formatBarDate, keepUpToDate, null);
 
         SleepUtil.sleep(5000);
@@ -139,7 +153,96 @@ class IBKRTest {
     }
 
     @Test
-    void writeHistoricalSPYDateFor1YearToCSV(){
+    void getHistoricalSPYDataSinceInception(){
+        
+        ApiConsumer apiConsumer = new ApiConsumer();
+        EClientSocket client = setupAPIConnection(apiConsumer);
+        
+        Contract spyContract = createSPYContract();
 
+        ZonedDateTime endTime = ZonedDateTime.parse("20230601 00:00:00 America/Chicago", ZONE_DATE_TIME_FORMAT);
+        String duration = "58 Y";
+        String barSizeSetitng = "1 day";
+        String whatToShow = WhatToShow.TRADES.name();
+        int regularTradingHours = 1; // only show data within regular trading hours
+        int formatBarDate = 1; // 1 indicates we should format as yyyyMMdd HH:mm:ss
+        boolean keepUpToDate = false;
+    
+        client.reqHistoricalData(0, spyContract, ZONE_DATE_TIME_FORMAT.format(endTime), duration,
+            barSizeSetitng, whatToShow, regularTradingHours, formatBarDate, keepUpToDate, null);
+
+        SleepUtil.sleepUntil(consumer -> consumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA) != null &&
+            consumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA).size() == 7637, apiConsumer, 30_000);
+
+        List<Bar> historicalDataResponse = apiConsumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA);
+
+        for(int i = 0; i<100; i++){
+            System.out.println(historicalDataResponse.get(i).time() + " price: " + historicalDataResponse.get(i).close());
+        }
+    }
+
+    @Test
+    void writeHistoricalSPYDataSinceInceptionToCSV() throws FileNotFoundException, IOException{
+        
+        ApiConsumer apiConsumer = new ApiConsumer();
+        EClientSocket client = setupAPIConnection(apiConsumer);
+        
+        Contract spyContract = createSPYContract();
+
+        ZonedDateTime endTime = ZonedDateTime.parse("20230601 00:00:00 America/Chicago", ZONE_DATE_TIME_FORMAT);
+        String duration = "58 Y";
+        String barSizeSetitng = "1 day";
+        String whatToShow = WhatToShow.TRADES.name();
+        int regularTradingHours = 1; // only show data within regular trading hours
+        int formatBarDate = 1; // 1 indicates we should format as yyyyMMdd HH:mm:ss
+        boolean keepUpToDate = false;
+    
+        client.reqHistoricalData(0, spyContract, ZONE_DATE_TIME_FORMAT.format(endTime), duration,
+            barSizeSetitng, whatToShow, regularTradingHours, formatBarDate, keepUpToDate, null);
+
+        SleepUtil.sleepUntil(consumer -> consumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA) != null &&
+            consumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA).size() == 7637, apiConsumer, 30_000);
+
+        List<Bar> historicalDataResponse = apiConsumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA);
+
+        IbkrCsvPrinter.writeHistoricalData(historicalDataResponse, spyContract.symbol());
+
+        CSVFormat CSV_FORMAT = CSVFormat.Builder.create()
+            .setHeader()
+            .build();
+
+        String expectedFileName = String.format("/market/ibkr/output/historical/stocks/SPY.csv");
+        File stockPriceHistoryFile = new File(IBKRTest.class.getResource(expectedFileName).getPath());
+
+        try(FileReader fileReader = new FileReader(stockPriceHistoryFile)){
+            CSVParser csvParser = new CSVParser(fileReader, CSV_FORMAT);
+
+            assertEquals(8, csvParser.getHeaderMap().size());
+            assertEquals(7637, csvParser.getRecords().size());
+        }
+    }
+
+    @Test
+    void testCsvPrinter() throws FileNotFoundException, IOException{
+        
+        List<Bar> historicalData = Arrays.asList(
+            new Bar("", 0, 0, 0, 0, null, 0, null)
+        );
+
+        IbkrCsvPrinter.writeHistoricalData(historicalData, "SPY");
+
+        CSVFormat CSV_FORMAT = CSVFormat.Builder.create()
+            .setHeader()
+            .build();
+
+        String expectedFileName = String.format("/market/ibkr/output/historical/stocks/SPY.csv");
+        File stockPriceHistoryFile = new File(IBKRTest.class.getResource(expectedFileName).getPath());
+
+        try(FileReader fileReader = new FileReader(stockPriceHistoryFile)){
+            CSVParser csvParser = new CSVParser(fileReader, CSV_FORMAT);
+
+            assertEquals(8, csvParser.getHeaderMap().size());
+            assertEquals(1, csvParser.getRecords().size());
+        }
     }
 }
