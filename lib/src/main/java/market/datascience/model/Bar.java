@@ -1,12 +1,12 @@
-package market.interactive_brokers.client;
+package market.datascience.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import com.ib.client.Decimal;
 
 public class Bar {
 
-    private LocalDateTime localDateTime;
+    private LocalDate localDate;
     private double open;
     private double high;
     private double low;
@@ -14,25 +14,6 @@ public class Bar {
     private Decimal volume;
     private int count;
     private Decimal wap;
-
-    public Bar(com.ib.client.Bar bar) {
-        this.localDateTime = LocalDateTime.parse(bar.time(), ApiConsumer.LOCAL_DATE_TIME_FORMAT);
-        this.open = bar.open();
-        this.high = bar.high();
-        this.low = bar.low();
-        this.close = bar.close();
-        this.volume = bar.volume();
-        this.count = bar.count();
-        this.wap = bar.wap();
-    }
-
-    public LocalDateTime getLocalDateTime() {
-        return localDateTime;
-    }
-
-    public void setLocalDateTime(LocalDateTime localDateTime) {
-        this.localDateTime = localDateTime;
-    }
 
     public double getOpen() {
         return open;
@@ -89,5 +70,14 @@ public class Bar {
     public void setWap(Decimal wap) {
         this.wap = wap;
     }
+
+    public LocalDate getLocalDate() {
+        return localDate;
+    }
+
+    public void setLocalDate(LocalDate localDate) {
+        this.localDate = localDate;
+    }
+    
     
 }

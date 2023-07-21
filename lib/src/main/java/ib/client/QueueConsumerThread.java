@@ -1,4 +1,4 @@
-package market.interactive_brokers.client;
+package ib.client;
 
 import java.io.IOException;
 import java.util.logging.Level;

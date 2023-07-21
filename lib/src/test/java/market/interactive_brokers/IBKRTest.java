@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvWriter;
 
 import com.ib.client.Bar;
 import com.ib.client.Contract;
@@ -30,12 +29,11 @@ import com.ib.client.Types.SecType;
 import com.ib.client.Types.WhatToShow;
 
 import TestJavaClient.SampleFrame;
-import market.datascience.repository.MarketRepository;
-import market.interactive_brokers.client.ApiConsumer;
-import market.interactive_brokers.client.IbkrApiMethod;
-import market.interactive_brokers.client.IbkrCsvPrinter;
-import market.interactive_brokers.client.QueueConsumerThread;
-import utils.SleepUtil;
+import ib.client.ApiConsumer;
+import ib.client.IbkrApiMethod;
+import ib.client.IbkrCsvPrinter;
+import ib.client.QueueConsumerThread;
+import util.SleepUtil;
 
 class IBKRTest {
 

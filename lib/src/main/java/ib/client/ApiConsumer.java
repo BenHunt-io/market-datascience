@@ -1,4 +1,4 @@
-package market.interactive_brokers.client;
+package ib.client;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +39,35 @@ public class ApiConsumer implements EWrapper {
     // new api respones get appeneded
     public Map<IbkrApiMethod, List<Object>> apiResponsesByName = new HashMap<>();
     public static final DateTimeFormatter LOCAL_DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd-HH:mm:ss");
+    // output time format for historical data by day
+    public static final DateTimeFormatter LOCAL_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private boolean historicalDataEnd;
+    private Integer nextValidId = null;
+    private boolean nextValidIdReady;
+
+    public boolean isNextValidIdReady() {
+        return nextValidIdReady;
+    }
+
+    public void setNextValidIdReady(boolean nextValidIdReady) {
+        this.nextValidIdReady = nextValidIdReady;
+    }
+
+    public int getNextValidId() {
+        return nextValidId;
+    }
+
+    public void setNextValidId(int nextValidId) {
+        this.nextValidId = nextValidId;
+    }
+
+    public boolean isHistoricalDataEnd() {
+        return historicalDataEnd;
+    }
+
+    public void setHistoricalDataEnd(boolean historicalDataEnd) {
+        this.historicalDataEnd = historicalDataEnd;
+    }
 
     public <T> T getLatestApiResponse(IbkrApiMethod apiMethod){
         List<Object> responsesForApiMethod = apiResponsesByName.get(apiMethod);
@@ -46,7 +75,9 @@ public class ApiConsumer implements EWrapper {
     }
 
     public <T> List<T> getApiResponses(IbkrApiMethod apiMethod){
-        return (List<T>) apiResponsesByName.get(apiMethod);
+        List<T> responses =  (List<T>) apiResponsesByName.get(apiMethod);
+        apiResponsesByName.clear();
+        return responses;
     }
 
     @Override
@@ -203,12 +234,15 @@ public class ApiConsumer implements EWrapper {
 
     @Override
     public void historicalData(int arg0, Bar arg1) {
+        historicalDataEnd=false;
+        nextValidIdReady=false;
         addApiResponse(IbkrApiMethod.HISTORICAL_DATA, arg1);
     }
 
     @Override
     public void historicalDataEnd(int arg0, String arg1, String arg2) {
         System.out.println("historical data end");
+        historicalDataEnd=true;
     }
 
     @Override
@@ -290,6 +324,8 @@ public class ApiConsumer implements EWrapper {
     @Override
     public void nextValidId(int arg0) {
         System.out.println("Next Valid ID: " + arg0);
+        nextValidId = arg0;
+        this.nextValidIdReady = true;
     }
 
     @Override

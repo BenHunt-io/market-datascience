@@ -1,9 +1,7 @@
-package utils;
+package util;
 
-import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 public class SleepUtil {
 
@@ -11,7 +9,6 @@ public class SleepUtil {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -22,7 +19,7 @@ public class SleepUtil {
             sleep(1000);
             sleepCount+=1000;
             if(sleepCount >= timeoutMillis){
-                fail("Timed out in " + timeoutMillis + " millis sleeping");
+                throw new RuntimeException("Timed out in " + timeoutMillis + " millis sleeping");
             }
         }
 
