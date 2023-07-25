@@ -1,12 +1,10 @@
 package ib.service;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.ib.client.Bar;
 import com.ib.client.Contract;
@@ -34,7 +32,10 @@ public class HistoricalDataService {
         client = setupAPIConnection(apiConsumer);
     }
 
-    public Path downloadHistoricalDataToCSV(List<String> tickers){
+    public Path downloadHistoricalDataToCSV(List<String> tickers, String outputDir){
+
+        String baseOutputDir = String.format("/market/ibkr/output/historical/stocks");
+        Path fullDirPath = Paths.get(HistoricalDataService.class.getResource(baseOutputDir).getPath(), outputDir);
 
         for(int i = 0; i<tickers.size(); i++){
             MemoryUtil.printMemoryUsage();
@@ -55,15 +56,15 @@ public class HistoricalDataService {
 
             SleepUtil.sleepUntil(ApiConsumer::isHistoricalDataEnd, apiConsumer, 90_000);
             List<Bar> historicalDataResponse = apiConsumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA);
-            IbkrCsvPrinter.writeHistoricalData(historicalDataResponse, tickers.get(i));
 
+
+            IbkrCsvPrinter.writeHistoricalData(historicalDataResponse, tickers.get(i), fullDirPath);
             System.out.println("Done downloading historical data for: " + tickers.get(i));
         }
 
         client.eDisconnect();
 
-        String outputDir = String.format("/market/ibkr/output/historical/stocks");
-        return Paths.get(HistoricalDataService.class.getResource(outputDir).getPath());
+        return fullDirPath;
 
     }
 

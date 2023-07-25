@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -203,7 +204,7 @@ class IBKRTest {
 
         List<Bar> historicalDataResponse = apiConsumer.getApiResponses(IbkrApiMethod.HISTORICAL_DATA);
 
-        IbkrCsvPrinter.writeHistoricalData(historicalDataResponse, spyContract.symbol());
+        IbkrCsvPrinter.writeHistoricalData(historicalDataResponse, spyContract.symbol(), Paths.get("SPYHistoricalOutput"));
 
         CSVFormat CSV_FORMAT = CSVFormat.Builder.create()
             .setHeader()
@@ -227,7 +228,7 @@ class IBKRTest {
             new Bar("", 0, 0, 0, 0, null, 0, null)
         );
 
-        IbkrCsvPrinter.writeHistoricalData(historicalData, "SPY");
+        IbkrCsvPrinter.writeHistoricalData(historicalData, "SPY", Paths.get("SPYHistoricalOutput"));
 
         CSVFormat CSV_FORMAT = CSVFormat.Builder.create()
             .setHeader()

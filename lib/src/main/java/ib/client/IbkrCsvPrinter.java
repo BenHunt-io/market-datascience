@@ -15,16 +15,14 @@ import com.ib.client.Bar;
 
 public class IbkrCsvPrinter {
 
-    public static void writeHistoricalData(List<Bar> barData, String tickerSymbol){
+    public static void writeHistoricalData(List<Bar> barData, String tickerSymbol, Path dirPath){
 
         CSVFormat CSV_FORMAT = CSVFormat.Builder.create()
             .setHeader("time", "open", "high", "low", "close", "volume", "count", "wap")
             .build();
 
-        String fileDir = String.format("/market/ibkr/output/historical/stocks");
         String fileName = String.format(tickerSymbol + ".csv");
-        
-        File stockPriceHistoryFile = createFileIfNotExist(fileDir, fileName);
+        File stockPriceHistoryFile = createFileIfNotExist(dirPath, fileName);
 
         try(FileWriter fileWriter = new FileWriter(stockPriceHistoryFile)){
             CSVPrinter csvPrinter = new CSVPrinter(fileWriter, CSV_FORMAT);
@@ -48,12 +46,11 @@ public class IbkrCsvPrinter {
         }
     }
 
-    private static File createFileIfNotExist(String dirPath, String fileName){
-
-        String fullDirPath = IbkrCsvPrinter.class.getResource(dirPath).getPath();
+    private static File createFileIfNotExist(Path dirPath, String fileName){
 
         try {
-            Path fullFilePath = Paths.get(fullDirPath, fileName);
+            Files.createDirectories(dirPath);
+            Path fullFilePath = Paths.get(dirPath.toString(), fileName);
             Files.deleteIfExists(fullFilePath);
             return Files.createFile(fullFilePath).toFile();
         } catch (IOException e) {
